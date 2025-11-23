@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMINA | El Amanecer de la Verdad</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Cinzel"', 'serif'],
+                        body: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    colors: {
+                        gold: { 400: '#fbbf24', 500: '#f59e0b' },
+                        dark: { bg: '#050505', card: '#121212' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { background-color: #050505; color: #e2e8f0; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        /* Spinner */
+        .loader { border: 2px solid rgba(255,255,255,0.1); border-left-color: #f59e0b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Audio Player Styling */
+        audio { width: 100%; height: 40px; border-radius: 8px; margin-bottom: 1rem; }
+        audio::-webkit-media-controls-panel { background-color: #1a1a1a; border: 1px solid #333; }
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display { color: #fff; }
+
+        /* Google Translate Custom Styling */
+        .goog-te-banner-frame.skiptranslate { display: none !important; } 
+        body { top: 0px !important; } 
+        #google_translate_element .goog-te-gadget-simple {
+            background-color: transparent !important;
+            border: none !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            font-size: 14px !important;
+            padding: 0 !important;
+        }
+        #google_translate_element .goog-te-gadget-simple span {
+            color: #e2e8f0 !important;
+            font-weight: 600 !important;
+        }
+        #google_translate_element .goog-te-gadget-simple span:hover {
+            color: #f59e0b !important;
+        }
+        #google_translate_element img { display: none !important; } /* Hide Google Icon */
+        .goog-te-gadget-icon { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen transition-colors duration-500 overflow-x-hidden">
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full top-0 z-40 glass border-b border-white/5">
+        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="text-xs font-bold tracking-widest text-gray-500 uppercase" id="date-display"></div>
+                <!-- Translate Widget Container -->
+                <div class="hidden md:block border-l border-white/10 pl-4">
+                    <div id="google_translate_element"></div>
+                </div>
+            </div>
+
+            <a href="/" class="absolute left-1/2 transform -translate-x-1/2 group text-center">
+                <h1 class="font-serif text-4xl md:text-5xl font-black tracking-tighter text-white group-hover:text-gold-500 transition-colors">
+                    LUMINA<span class="text-gold-500">.</span>
+                </h1>
+            </a>
+            <div class="flex gap-4 items-center">
+                <div id="admin-indicator" class="hidden text-gold-500 text-xs font-bold uppercase border border-gold-500 px-2 py-1 rounded animate-pulse">Admin</div>
+                
+                <!-- Mobile Translate Toggle (Icon) -->
+                <button class="md:hidden hover:text-gold-500 transition" onclick="toggleMobileTranslate()">
+                    <i class="ph ph-globe text-xl"></i>
+                </button>
+
+                <button onclick="toggleSearch()" class="hover:text-gold-500 transition"><i class="ph ph-magnifying-glass text-xl"></i></button>
+            </div>
+        </div>
+        <!-- Mobile Translate Dropdown -->
+        <div id="mobile-translate-menu" class="hidden bg-dark-card border-b border-white/10 p-4 md:hidden">
+            <p class="text-xs text-gray-500 mb-2 uppercase tracking-widest">Traducir web:</p>
+            <div id="google_translate_element_mobile"></div>
+        </div>
+    </nav>
+
+    <!-- MAIN LAYOUT -->
+    <main class="pt-32 pb-20 container mx-auto px-4 md:px-8 min-h-screen">
+        
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-4 justify-center mb-16" id="categories-container">
+            <button onclick="filterNews('all')" class="px-4 py-1 rounded-full border border-white/20 text-sm hover:bg-white hover:text-black transition active-cat bg-white text-black">Todo</button>
+            <button onclick="filterNews('Política')" class="px-4 py-1 rounded-full border border-white/20 text-sm hover:bg-white hover:text-black transition">Política</button>
+            <button onclick="filterNews('Economía')" class="px-4 py-1 rounded-full border border-white/20 text-sm hover:bg-white hover:text-black transition">Economía</button>
+            <button onclick="filterNews('Tecnología')" class="px-4 py-1 rounded-full border border-white/20 text-sm hover:bg-white hover:text-black transition">Tecnología</button>
+            <button onclick="filterNews('Deportes')" class="px-4 py-1 rounded-full border border-white/20 text-sm hover:bg-white hover:text-black transition">Deportes</button>
+        </div>
+
+        <!-- News Grid -->
+        <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="col-span-full text-center py-20 opacity-50">
+                <i class="ph ph-spinner animate-spin text-4xl mb-4 block mx-auto"></i>
+                <p class="font-serif tracking-widest">Conectando con LUMINA...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ARTICLE MODAL -->
+    <div id="article-view" class="fixed inset-0 z-50 bg-black hidden overflow-y-auto">
+        <div class="fixed top-0 w-full p-6 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+            <button onclick="closeArticle()" class="pointer-events-auto w-12 h-12 rounded-full bg-white/10 backdrop-blur flex items-center justify-center hover:bg-white hover:text-black transition group">
+                <i class="ph-bold ph-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i>
+            </button>
+            <div class="pointer-events-auto flex gap-3">
+                <button onclick="copyLink()" class="px-4 py-2 rounded-full bg-gold-500 text-black font-bold text-sm hover:bg-white transition shadow-lg flex items-center gap-2">
+                    <i class="ph-bold ph-share-network"></i> Compartir
+                </button>
+            </div>
+        </div>
+        
+        <!-- Hero Image (Single Cover) -->
+        <div class="w-full h-[60vh] relative">
+            <div id="article-hero-container" class="w-full h-full"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+            <div class="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-5xl mx-auto">
+                <span id="article-category-badge" class="px-3 py-1 bg-gold-500 text-black text-xs font-black uppercase tracking-widest mb-4 inline-block">Categoría</span>
+                <h1 id="article-title" class="font-serif text-3xl md:text-6xl font-black leading-tight text-white drop-shadow-lg"></h1>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-6 py-12">
+            <!-- Metadata -->
+            <div class="flex items-center justify-between border-b border-white/10 pb-6 mb-8 text-sm text-gray-400">
+                <span id="article-date"></span>
+                <span>Por <span class="text-white font-bold">Redacción LUMINA</span></span>
+            </div>
+
+            <!-- Audio Section -->
+            <div id="audio-section" class="mb-8 hidden">
+                <h3 class="text-gold-500 text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2"><i class="ph-fill ph-speaker-high"></i> Escuchar Noticia</h3>
+                <div id="audio-container" class="space-y-2"></div>
+            </div>
+
+            <!-- Main Content -->
+            <div id="article-content" class="prose prose-invert prose-lg max-w-none font-body leading-relaxed text-gray-300 mb-12"></div>
+
+            <!-- Image Gallery -->
+            <div id="gallery-section" class="mb-12 hidden">
+                <h3 class="text-white text-xl font-serif font-bold mb-6 border-l-4 border-gold-500 pl-4">Galería de Imágenes</h3>
+                <div id="gallery-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- Video Gallery -->
+            <div id="video-section" class="mb-12 hidden">
+                <h3 class="text-white text-xl font-serif font-bold mb-6 border-l-4 border-gold-500 pl-4">Videos Relacionados</h3>
+                <div id="video-container" class="space-y-8"></div>
+            </div>
+            
+            <!-- External Link -->
+            <div id="article-link-container" class="mt-12 hidden">
+                <a id="article-external-link" href="#" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 border border-white/20 rounded-lg hover:border-gold-500 hover:text-gold-500 transition w-full justify-center">
+                    <i class="ph-bold ph-link"></i> Fuente / Archivo Externo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div id="admin-login" class="fixed inset-0 z-[60] bg-black/90 backdrop-blur-xl hidden flex items-center justify-center">
+        <div class="w-full max-w-sm p-8 text-center">
+            <i class="ph-duotone ph-lock-key text-5xl text-gold-500 mb-6"></i>
+            <h2 class="font-serif text-2xl font-bold mb-2">Acceso Seguro</h2>
+            <p class="text-gray-500 text-sm mb-6">Introduce el PIN Maestro</p>
+            <input type="password" id="admin-pin" maxlength="4" placeholder="PIN" class="bg-white/10 border border-white/20 rounded text-center text-3xl tracking-[1em] w-full py-4 focus:outline-none focus:border-gold-500 transition text-white mb-4 font-mono">
+            <p id="login-status" class="text-gold-500 text-xs h-4 mb-4"></p>
+            <button onclick="verifyPin()" class="w-full bg-gold-500 text-black font-bold py-3 rounded hover:bg-white transition">Autenticar</button>
+            <button onclick="closeAdminLogin()" class="mt-4 text-gray-500 hover:text-white text-sm">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD (CMS) -->
+    <div id="admin-dashboard" class="fixed inset-0 z-[60] bg-dark-card hidden overflow-y-auto">
+        <div class="container mx-auto px-6 py-12 max-w-4xl">
+            <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+                <h2 class="font-serif text-3xl font-bold text-gold-500">Editor Multimedia LUMINA</h2>
+                <button onclick="closeDashboard()" class="text-gray-400 hover:text-white"><i class="ph-bold ph-x text-2xl"></i></button>
+            </div>
+            <div class="mb-6 p-4 bg-white/5 rounded border border-white/10 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 mb-1 uppercase tracking-widest">Conexión</p>
+                    <p id="github-status" class="text-sm text-yellow-400 flex items-center gap-2">
+                        <i class="ph-fill ph-circle-notch animate-spin"></i> Verificando GitHub...
+                    </p>
+                </div>
+                <div class="text-xs text-gray-500 text-right">
+                    <p>Repositorio Destino:</p>
+                    <p id="repo-info" class="font-mono">...</p>
+                </div>
+            </div>
+
+            <form onsubmit="publishNews(event)" class="space-y-8">
+                <!-- Basic Info -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Titular</label>
+                        <input type="text" id="post-title" required class="w-full bg-black border border-white/10 rounded-lg p-4 text-white focus:border-gold-500 focus:outline-none text-xl font-serif">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Categoría</label>
+                        <select id="post-category" class="w-full bg-black border border-white/10 rounded-lg p-4 text-white focus:border-gold-500 focus:outline-none h-full">
+                            <option value="Política">Política</option>
+                            <option value="Economía">Economía</option>
+                            <option value="Tecnología">Tecnología</option>
+                            <option value="Deportes">Deportes</option>
+                            <option value="Cultura">Cultura</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cover Image (Single) -->
+                <div class="bg-white/5 p-6 rounded-xl border border-white/10">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gold-500 mb-4 flex items-center gap-2">
+                        <i class="ph-fill ph-image"></i> Imagen de Portada (Única)
+                    </label>
+                    <input type="file" id="file-cover" accept="image/*" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gold-500 file:text-black hover:file:bg-white transition mb-2">
+                    <input type="url" id="post-cover" class="w-full bg-black border border-white/10 rounded p-2 text-white text-sm focus:border-gold-500 focus:outline-none" placeholder="O pega URL directa...">
+                </div>
+
+                <!-- Multimedia Gallery (Multiple) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Images -->
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gold-500 mb-4 flex items-center gap-2">
+                            <i class="ph-fill ph-images"></i> Galería de Imágenes (Varias)
+                        </label>
+                        <input type="file" id="file-gallery-images" accept="image/*" multiple class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white hover:file:text-black transition">
+                        <p class="text-[10px] text-gray-500 mt-2">Selecciona múltiples archivos con Ctrl/Cmd</p>
+                    </div>
+
+                    <!-- Videos -->
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gold-500 mb-4 flex items-center gap-2">
+                            <i class="ph-fill ph-film-strip"></i> Galería de Videos (Varios)
+                        </label>
+                        <input type="file" id="file-gallery-videos" accept="video/*" multiple class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white hover:file:text-black transition">
+                    </div>
+                </div>
+
+                <!-- Audio Files -->
+                <div class="bg-white/5 p-6 rounded-xl border border-white/10">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gold-500 mb-4 flex items-center gap-2">
+                        <i class="ph-fill ph-microphone"></i> Archivos de Audio (Podcast/Entrevistas)
+                    </label>
+                    <input type="file" id="file-audio" accept="audio/*" multiple class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white hover:file:text-black transition">
+                </div>
+
+                <!-- Content -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Cuerpo de la Noticia</label>
+                    <textarea id="post-content" required rows="8" class="w-full bg-black border border-white/10 rounded-lg p-4 text-white focus:border-gold-500 focus:outline-none font-body text-lg"></textarea>
+                </div>
+
+                <!-- Link -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Enlace Externo / Fuente (Opcional)</label>
+                    <input type="url" id="post-link" class="w-full bg-black border border-white/10 rounded-lg p-3 text-white focus:border-gold-500 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-4 pt-6 border-t border-white/10">
+                    <button type="button" onclick="closeDashboard()" class="px-6 py-3 rounded-lg text-gray-400 hover:text-white transition">Cancelar</button>
+                    <button type="submit" class="px-8 py-3 bg-gold-500 hover:bg-white text-black font-bold rounded-lg shadow-lg hover:shadow-gold-500/20 transition flex items-center gap-2">
+                        <i class="ph-bold ph-cloud-arrow-up"></i> Publicar Todo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-dark-card text-white py-12 border-t border-white/5">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="font-serif text-3xl font-black mb-4 tracking-tighter">LUMINA</h2>
+            <p class="text-gray-500 text-sm mb-8">Claridad en un mundo complejo.</p>
+            <div class="flex justify-center gap-6 text-gray-400">
+                <a href="#" class="hover:text-gold-500"><i class="ph-fill ph-twitter-logo text-xl"></i></a>
+                <a href="#" class="hover:text-gold-500"><i class="ph-fill ph-instagram-logo text-xl"></i></a>
+                <a href="#" class="hover:text-gold-500"><i class="ph-fill ph-youtube-logo text-xl"></i></a>
+            </div>
+            <p class="text-xs text-gray-600 mt-8">&copy; 2025 Grupo Lumina. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } 
+               from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } 
+               from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-GPXKkQv4nHo52sV0s7RBJc9-NYF45z4",
+            authDomain: "citafacil-2ogjh.firebaseapp.com",
+            projectId: "citafacil-2ogjh",
+            storageBucket: "citafacil-2ogjh.firebasestorage.app",
+            messagingSenderId: "91558735363",
+            appId: "1:91558735363:web:1c73fb59b4cad42847e836"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        // IMPORTANT: New collection name "noticias_lumina"
+        const newsCollection = collection(db, "noticias_lumina");
+
+        // VARIABLES
+        let allNews = [];
+        let githubConfig = { token: null, owner: null, repo: null };
+        window.currentCategory = 'all';
+
+        // --- GOOGLE TRANSLATE INIT ---
+        window.googleTranslateElementInit = () => {
+            new google.translate.TranslateElement({
+                pageLanguage: 'es',
+                includedLanguages: 'en,fr,it,pt,de,ru,ja,zh-CN',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+
+        // Load Script Dynamically
+        const script = document.createElement('script');
+        script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+        document.body.appendChild(script);
+
+        window.toggleMobileTranslate = () => {
+            const menu = document.getElementById('mobile-translate-menu');
+            const container = document.getElementById('google_translate_element_mobile');
+            const original = document.getElementById('google_translate_element');
+            
+            menu.classList.toggle('hidden');
+            if (!menu.classList.contains('hidden')) {
+                if (original.firstChild) container.appendChild(original.firstChild);
+            } else {
+                if (container.firstChild) original.appendChild(container.firstChild);
+            }
+        }
+
+        // --- ADMIN LOGIN ---
+        let keyBuffer = "";
+        const secretWord = "admin";
+        
+        window.addEventListener('keyup', (e) => {
+            if(e.key.length === 1 && /[a-zA-Z]/.test(e.key)) keyBuffer = (keyBuffer + e.key.toLowerCase()).slice(-10);
+            if(e.key === "Shift" && keyBuffer.endsWith(secretWord)) {
+                document.getElementById('admin-login').classList.remove('hidden');
+                document.getElementById('admin-pin').focus();
+                keyBuffer = "";
+            }
+        });
+
+        window.closeAdminLogin = () => {
+            document.getElementById('admin-login').classList.add('hidden');
+            document.getElementById('admin-pin').value = "";
+            document.getElementById('login-status').innerText = "";
+        }
+
+        window.verifyPin = async () => {
+            const input = document.getElementById('admin-pin').value;
+            const status = document.getElementById('login-status');
+            
+            if(input === "1506") {
+                status.innerText = "Autenticando...";
+                try {
+                    await signInWithEmailAndPassword(auth, "admin@lumina.com", "lumina_master_1506");
+                    handleSuccessfulLogin();
+                } catch (error) {
+                    if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
+                        try {
+                            await createUserWithEmailAndPassword(auth, "admin@lumina.com", "lumina_master_1506");
+                            handleSuccessfulLogin();
+                        } catch (e) { status.innerText = "Error: " + e.code; }
+                    } else { status.innerText = "Error: " + error.code; }
+                }
+            } else { status.innerText = "PIN Incorrecto"; }
+        }
+
+        function handleSuccessfulLogin() {
+            closeAdminLogin();
+            document.getElementById('admin-dashboard').classList.remove('hidden');
+            fetchSecureSettings();
+        }
+
+        // --- GITHUB UPLOAD ENGINE ---
+        async function fetchSecureSettings() {
+            try {
+                const docSnap = await getDoc(doc(db, "secreto_config", "github"));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    githubConfig = { token: data.token, owner: data.owner, repo: data.repo };
+                    document.getElementById('github-status').innerHTML = `<i class="ph-fill ph-check-circle"></i> Conectado`;
+                    document.getElementById('github-status').className = "text-sm text-green-400 flex items-center gap-2";
+                    document.getElementById('repo-info').innerText = `${data.owner}/${data.repo}`;
+                }
+            } catch (e) { document.getElementById('github-status').innerText = "Error de config"; }
+        }
+
+        async function uploadFileToGitHub(file) {
+            if (!githubConfig.token) throw new Error("Falta configuración de GitHub");
+            
+            const toBase64 = file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+
+            const content = await toBase64(file);
+            const filename = `uploads/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+            const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${filename}`;
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubConfig.token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: `Lumina Upload: ${file.name}`, content: content })
+            });
+
+            if (!response.ok) throw new Error("Error subiendo a GitHub");
+            const data = await response.json();
+            return data.content.download_url; 
+        }
+
+        // --- PUBLISH LOGIC (MULTIPLE FILES) ---
+        window.publishNews = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<div class="loader"></div> Subiendo...`; 
+            btn.disabled = true;
+
+            try {
+                // 1. Upload Cover
+                let coverUrl = document.getElementById('post-cover').value;
+                const coverFile = document.getElementById('file-cover').files[0];
+                if(coverFile) {
+                    btn.innerHTML = `<div class="loader"></div> Subiendo Portada...`;
+                    coverUrl = await uploadFileToGitHub(coverFile);
+                }
+
+                // 2. Upload Galleries
+                const uploadList = async (inputId, typeLabel) => {
+                    const files = document.getElementById(inputId).files;
+                    const urls = [];
+                    for(let i=0; i<files.length; i++) {
+                        btn.innerHTML = `<div class="loader"></div> Subiendo ${typeLabel} (${i+1}/${files.length})...`;
+                        urls.push(await uploadFileToGitHub(files[i]));
+                    }
+                    return urls;
+                };
+
+                const galleryImages = await uploadList('file-gallery-images', 'Imagen');
+                const galleryVideos = await uploadList('file-gallery-videos', 'Video');
+                const galleryAudios = await uploadList('file-audio', 'Audio');
+
+                // 3. Save to Firestore
+                btn.innerHTML = `<div class="loader"></div> Guardando...`;
+                await addDoc(newsCollection, {
+                    title: document.getElementById('post-title').value,
+                    category: document.getElementById('post-category').value,
+                    content: document.getElementById('post-content').value,
+                    link: document.getElementById('post-link').value || null,
+                    cover_image: coverUrl,
+                    gallery_images: galleryImages,
+                    gallery_videos: galleryVideos,
+                    gallery_audios: galleryAudios,
+                    timestamp: Date.now()
+                });
+
+                alert("¡Publicado!");
+                closeDashboard();
+                e.target.reset();
+                document.querySelectorAll('input[type="file"]').forEach(i => i.value = '');
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                console.error(err);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- RENDER & VIEW ---
+        const q = query(newsCollection, orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            allNews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderGrid(allNews);
+            
+            // Deep Link
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.get('id')) {
+                const article = allNews.find(n => n.id === urlParams.get('id'));
+                if(article) openArticle(article.id);
+            }
+        }, (error) => {
+            // Permission Error Handler
+            console.error("Error obteniendo noticias:", error);
+            if (error.code === 'permission-denied') {
+                document.getElementById('news-grid').innerHTML = `
+                    <div class="col-span-full text-center py-20 text-red-500 animate-pulse">
+                        <i class="ph ph-warning-circle text-5xl mb-4 block mx-auto"></i>
+                        <p class="font-serif text-2xl">Acceso Denegado</p>
+                        <p class="text-sm mt-2 max-w-md mx-auto">Las reglas de seguridad de Firebase no permiten leer "noticias_lumina". Actualiza las reglas en la consola.</p>
+                    </div>`;
+            }
+        });
+
+        window.renderGrid = (newsData) => {
+            const grid = document.getElementById('news-grid');
+            const filtered = window.currentCategory === 'all' ? newsData : newsData.filter(n => n.category === window.currentCategory);
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-gray-600"><p class="font-serif text-xl">Sin noticias publicadas.</p></div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => `
+                <article class="group bg-white/5 border border-white/5 rounded-xl overflow-hidden hover:border-gold-500/50 transition-colors cursor-pointer flex flex-col" onclick="openArticle('${item.id}')">
+                    <div class="aspect-video w-full overflow-hidden relative">
+                        <img src="${item.cover_image || item.image}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100" onerror="this.src='https://placehold.co/600x400/000/FFF?text=Sin+Imagen'">
+                        <div class="absolute top-3 left-3 bg-black/80 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest text-gold-500 border border-gold-500/20">${item.category}</div>
+                        ${(item.gallery_videos?.length > 0 || item.video) ? '<div class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-12 h-12 bg-gold-500/80 rounded-full flex items-center justify-center text-black"><i class="ph-fill ph-play"></i></div></div>' : ''}
+                        ${(item.gallery_audios?.length > 0) ? '<div class="absolute bottom-3 right-3 bg-black/80 backdrop-blur px-2 py-1 rounded text-[10px] text-white flex items-center gap-1"><i class="ph-fill ph-speaker-high"></i> Audio</div>' : ''}
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="font-serif text-xl font-bold text-gray-100 mb-3 leading-tight group-hover:text-gold-500 transition-colors line-clamp-3">${item.title}</h3>
+                        <div class="mt-auto pt-4 border-t border-white/5 text-xs text-gray-600 flex justify-between">
+                            <span>${new Date(item.timestamp).toLocaleDateString()}</span>
+                            <span class="group-hover:translate-x-1 transition-transform flex items-center gap-1">Leer más <i class="ph-bold ph-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        window.filterNews = (cat) => {
+            window.currentCategory = cat;
+            document.querySelectorAll('#categories-container button').forEach(btn => {
+                btn.classList.toggle('bg-white', btn.innerText === (cat === 'all' ? 'Todo' : cat));
+                btn.classList.toggle('text-black', btn.innerText === (cat === 'all' ? 'Todo' : cat));
+            });
+            renderGrid(allNews);
+        }
+
+        window.openArticle = (id) => {
+            const article = allNews.find(n => n.id === id);
+            if(!article) return;
+            
+            try { window.history.pushState({path: `?id=${id}`}, '', `?id=${id}`); } catch(e){}
+
+            const view = document.getElementById('article-view');
+            
+            // 1. Header Info
+            document.getElementById('article-title').innerText = article.title;
+            document.getElementById('article-category-badge').innerText = article.category;
+            document.getElementById('article-date').innerText = new Date(article.timestamp).toLocaleDateString('es-ES', {dateStyle: 'full'});
+            
+            // 2. Cover Image (Always Image)
+            document.getElementById('article-hero-container').innerHTML = `<img src="${article.cover_image || article.image}" class="w-full h-full object-cover">`;
+
+            // 3. Content
+            document.getElementById('article-content').innerHTML = article.content.split('\n').map(p => p.trim() ? `<p class="mb-6">${p}</p>` : '').join('');
+
+            // 4. Audios
+            const audios = article.gallery_audios || [];
+            const audioSection = document.getElementById('audio-section');
+            const audioContainer = document.getElementById('audio-container');
+            if(audios.length > 0) {
+                audioSection.classList.remove('hidden');
+                audioContainer.innerHTML = audios.map((url, i) => `
+                    <div class="bg-white/5 p-2 rounded border border-white/10">
+                        <p class="text-[10px] text-gray-500 uppercase mb-1">Audio ${i+1}</p>
+                        <audio controls src="${url}"></audio>
+                    </div>
+                `).join('');
+            } else { audioSection.classList.add('hidden'); }
+
+            // 5. Image Gallery
+            const images = article.gallery_images || [];
+            const gallerySection = document.getElementById('gallery-section');
+            const galleryContainer = document.getElementById('gallery-container');
+            if(images.length > 0) {
+                gallerySection.classList.remove('hidden');
+                galleryContainer.innerHTML = images.map(url => `<img src="${url}" class="w-full h-64 object-cover rounded-lg border border-white/10 hover:opacity-90 transition">`).join('');
+            } else { gallerySection.classList.add('hidden'); }
+
+            // 6. Video Gallery
+            const videos = article.gallery_videos || (article.video ? [article.video] : []);
+            const videoSection = document.getElementById('video-section');
+            const videoContainer = document.getElementById('video-container');
+            if(videos.length > 0) {
+                videoSection.classList.remove('hidden');
+                videoContainer.innerHTML = videos.map(url => {
+                    if(url.includes('youtube')) {
+                        let vId = url.split('v=')[1] || url.split('/').pop();
+                        if(vId.includes('&')) vId = vId.split('&')[0];
+                        return `<div class="aspect-video w-full rounded-xl overflow-hidden border border-white/10"><iframe class="w-full h-full" src="https://www.youtube.com/embed/${vId}" frameborder="0" allowfullscreen></iframe></div>`;
+                    } else {
+                        return `<video class="w-full rounded-xl border border-white/10" controls><source src="${url}" type="video/mp4"></video>`;
+                    }
+                }).join('');
+            } else { videoSection.classList.add('hidden'); }
+
+            // 7. Link
+            const linkDiv = document.getElementById('article-link-container');
+            if(article.link) { 
+                linkDiv.classList.remove('hidden'); 
+                document.getElementById('article-external-link').href = article.link; 
+            } else { linkDiv.classList.add('hidden'); }
+
+            view.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.closeArticle = () => {
+            document.getElementById('article-view').classList.add('hidden');
+            document.getElementById('audio-container').innerHTML = ""; // Stop audio
+            document.getElementById('video-container').innerHTML = ""; // Stop video
+            document.body.style.overflow = '';
+            try { window.history.pushState({path: '/'}, '', window.location.pathname.split('?')[0]); } catch(e){}
+        }
+
+        window.copyLink = () => navigator.clipboard.writeText(window.location.href).then(() => alert("Enlace copiado"));
+        window.closeDashboard = () => document.getElementById('admin-dashboard').classList.add('hidden');
+        window.toggleSearch = () => alert("Buscador en construcción");
+
+        // Initial Date & Listeners
+        const d = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('date-display').textContent = d.charAt(0).toUpperCase() + d.slice(1);
+        document.getElementById('admin-pin').addEventListener('keypress', (e) => { if(e.key==='Enter') verifyPin(); });
+        
+        onAuthStateChanged(auth, (user) => {
+            if(user) document.getElementById('admin-indicator').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
